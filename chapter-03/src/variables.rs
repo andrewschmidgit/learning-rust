@@ -1,12 +1,7 @@
-fn main() {
-    compiler_error();
-    mutability();
-}
-
 fn immutable() {
     let x = 5;
     println!("The value of x is {x}");
-    x = 6; // produces compiler error
+    // x = 6; // produces compiler error
     println!("The value of x is {x}");
 }
 
