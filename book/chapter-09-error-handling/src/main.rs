@@ -1,48 +1,63 @@
 use std::{
     error::Error,
-    fs::File,
+    fs::{File, self},
     io::{self, ErrorKind, Read},
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let greeting_file_result = File::open("hello.txt");
+    let name = "hello.txt";
 
-    // That's a lot of matches.. Could start a fire
-    let greeting_file = match greeting_file_result {
-        Ok(file) => file,
-        Err(error) => match error.kind() {
-            ErrorKind::NotFound => match File::create("hello.txt") {
-                Ok(fc) => fc,
-                Err(e) => panic!("Problem creating the file: {:?}", e),
-            },
-            other_error => {
-                panic!("Problem opening the file: {:?}", other_error)
-            }
-        },
-    };
+    let _file = get_and_create_file_panic(name);
+    let _file = get_and_create_file_closure(name);
+    let _file = get_and_create_file_unwrap(name);
+    let _file = get_and_create_file_expect(name);
 
-    // Let's try again: with unwrapping!
-    let greeting_file = File::open("hello.txt").unwrap_or_else(|error| {
-        if error.kind() == ErrorKind::NotFound {
-            File::create("hello.txt")
-                .unwrap_or_else(|error| panic!("Problem creating the file: {:?}", error))
-        } else {
-            panic!("Problem opening the file: {:?}", error)
-        }
-    });
-
-    // Will auto-panic
-    let greeting_file = File::open("hello.txt").unwrap();
-
-    // Panicking with custom message
-    let greeting_file =
-        File::open("hello.txt").expect("hello.txt should be included in the project");
+    let _username = read_username_from_file(name);
+    let _username = read_username_from_file_shorter(name);
+    let _username = read_username_from_file_shortest(name);
 
     Ok(())
 }
 
-fn read_username_from_file() -> Result<String, io::Error> {
-    let username_file_result = File::open("hello.txt");
+fn get_and_create_file_panic(name: &str) -> File {
+    let result = File::open(name);
+
+    match result {
+        Ok(file) => file,
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => match File::create(name) {
+                Ok(fc) => fc,
+                Err(e) => panic!("Problem creating the file: {:?}", e),
+            },
+            other_error => {
+                panic!("Problem opening the file: {:?}", other_error);
+            }
+        }
+    }
+}
+
+fn get_and_create_file_closure(name: &str) -> File {
+    File::open(name).unwrap_or_else(|error| {
+        if error.kind() == ErrorKind::NotFound {
+            File::create(name).unwrap_or_else(|error| {
+                panic!("Problem creating the file: {:?}", error);
+            })
+        } else {
+            panic!("Problem opening the file: {:?}", error);
+        }
+    })
+}
+
+fn get_and_create_file_unwrap(name: &str) -> File {
+    File::open(name).unwrap()
+}
+
+fn get_and_create_file_expect(name: &str) -> File {
+    File::open(name).expect("hello.txt should be included")
+}
+
+fn read_username_from_file(name: &str) -> Result<String, io::Error> {
+    let username_file_result = File::open(name);
 
     let mut username_file = match username_file_result {
         Ok(file) => file,
@@ -57,11 +72,14 @@ fn read_username_from_file() -> Result<String, io::Error> {
     }
 }
 
-fn read_username_from_file_shorter() -> Result<String, io::Error> {
+fn read_username_from_file_shorter(name: &str) -> Result<String, io::Error> {
     let mut username = String::new();
-    // The error will be returned at the ?
-    File::open("hello.txt")?.read_to_string(&mut username)?;
+    File::open(name)?.read_to_string(&mut username)?;
     Ok(username)
+}
+
+fn read_username_from_file_shortest(name: &str) -> Result<String, io::Error> {
+    fs::read_to_string(name)
 }
 
 // None will be automatically returned at the point of ?
